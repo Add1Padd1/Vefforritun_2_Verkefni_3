@@ -58,11 +58,14 @@ app.post('/categories', async (c) => {
 // Það sem ég gerði til að deletea category...
 app.delete('/categories/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const categoryToDelete = await deleteCategory(slug);
-  if (!categoryToDelete) {
-    return c.json({ message: 'Category not found' }, 404);
+  console.log(slug);
+  const category = getCategory(slug);
+  console.log(category);
+  if (!category) {
+    return c.json({ error: 'Category not found' }, 404);
   }
-  return c.json(categoryToDelete, 204);
+  const deletedCategory = await deleteCategory(category);
+  return c.json(deletedCategory, 401);
 });
 
 serve(

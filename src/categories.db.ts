@@ -19,6 +19,7 @@ const CategoryToCreateSchema = z.object({
 
 type Category = z.infer<typeof CategorySchema>;
 type CategoryToCreate = z.infer<typeof CategoryToCreateSchema>;
+type CategoryToDelete = z.infer<typeof CategorySchema>;
 const mockCategories: Array<Category> = [
   {
     id: 1,
@@ -71,12 +72,16 @@ export async function createCategory(
   return createdCategory;
 }
 // Það sem ég gerði til að deletea category...
-export async function deleteCategory(slug: string) {
-  const categoryFound = getCategory(slug);
-  const categoryToDelete = await prisma.categories.delete({
+export async function deleteCategory(
+  categoryToDelete: CategoryToDelete
+): Promise<Category> {
+  if (!categoryToDelete) {
+    throw new Error('Category not found');
+  }
+  const deletedCategory = await prisma.categories.delete({
     where: {
-      slug: categoryFound?.slug,
+      slug: categoryToDelete?.slug,
     },
   });
-  return categoryToDelete;
+  return deletedCategory;
 }
