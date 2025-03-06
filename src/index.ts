@@ -55,6 +55,7 @@ app.post('/categories', async (c) => {
   try {
     categoryToCreate = await c.req.json();
     console.log('Þetta er category', categoryToCreate);
+    // eslint-disable-next-line
   } catch (error) {
     return c.json({ error: 'invalid json' }, 400);
   }
@@ -81,6 +82,7 @@ app.delete('/category/:slug', async (c) => {
   try {
     await deleteCategory(category);
     return c.body(null, 204);
+    // eslint-disable-next-line
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
@@ -96,6 +98,7 @@ app.patch('/category/:slug', async (c) => {
   let categoryToUpdate: unknown;
   try {
     categoryToUpdate = await c.req.json();
+    // eslint-disable-next-line
   } catch (error) {
     return c.json({ error: 'invalid json' }, 400);
   }

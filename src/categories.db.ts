@@ -6,6 +6,7 @@ const questionsSchema = z.object({
   question: z.string(),
   answer: z.string(),
 });
+// eslint-disable-next-line
 const CategorySchema = z.object({
   id: z.number(),
   slug: z.string(),
@@ -55,10 +56,7 @@ type CategoryToUpdate = z.infer<typeof CategoryToUpdateSchema>;
 ]; */
 const prisma = new PrismaClient();
 
-export async function getCategories(
-  limit = 10,
-  offset = 0
-): Promise<Array<Category>> {
+export async function getCategories(): Promise<Array<Category>> {
   const categories = await prisma.categories.findMany();
   console.log('categories :>> ', categories);
   return categories;
@@ -113,7 +111,7 @@ export async function deleteCategory(
 }
 
 export async function updateCategory(
-  newValidCategory: CategoryToCreate,
+  newValidCategory: CategoryToUpdate,
   categoryToUpdate: Category
 ): Promise<Category | null> {
   console.log('categoryToUpdate :>> ', categoryToUpdate.title);
