@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+
 import {
   createCategory,
   getCategories,
@@ -14,8 +15,18 @@ const app = new Hono();
 
 app.get('/', (c) => {
   const data = {
-    name: 'John Doe',
-    age: 30,
+    name: 'Categories',
+    description: 'API to manage categories',
+    _links: {
+      self: {
+        href: '/',
+        method: 'GET',
+      },
+      categories: {
+        href: '/categories',
+        method: 'GET',
+      },
+    },
   };
   return c.json(data);
 });
@@ -25,18 +36,18 @@ app.get('/categories', async (c) => {
   return c.json(categories);
 });
 
-app.get('/categories/:slug', (c) => {
+app.get('/categories/:slug', async (c) => {
   const slug = c.req.param('slug');
 
   // Validate á hámarkslengd á slug
   if (slug.length > 100) {
     return c.json({ message: 'Slug is too long' }, 400);
   }
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   if (!category) {
     return c.json({ message: 'Category not found' }, 404);
   }
-
+  console.log('category :>> ', category);
   return c.json(category);
 });
 app.post('/categories', async (c) => {
@@ -78,7 +89,7 @@ app.delete('/category/:slug', async (c) => {
 // Það sem ég gerði til að updatea category...
 app.patch('/category/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   if (!category) {
     return c.json({ error: 'Category not found' }, 404);
   }
@@ -97,7 +108,7 @@ app.patch('/category/:slug', async (c) => {
     );
   }
   console.log('Er kominn hérna');
-  const updated = await updateCategory(validCategory.data, slug);
+  const updated = await updateCategory(validCategory.data, category);
   console.log('updated :>> ', updated);
   return c.json(updated, 200);
 

@@ -12,6 +12,7 @@
     "hono": "^4.7.2",
     "prisma": "^6.4.1",
     "typescript": "^5.8.2",
+    "xss": "^1.0.15",
     "zod": "^3.24.2"
   },
   "devDependencies": {

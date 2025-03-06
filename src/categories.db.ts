@@ -1,34 +1,42 @@
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { get } from 'http';
+import xss from 'xss';
+const questionsSchema = z.object({
+  id: z.number(),
+  question: z.string(),
+  answer: z.string(),
+});
 const CategorySchema = z.object({
   id: z.number(),
   slug: z.string(),
   title: z
     .string()
     .min(3, 'title must be at least 3 letters')
-    .max(10024, 'title must be at most 1024 letters'),
+    .max(1024, 'title must be at most 1024 letters'),
+  questions: z.array(questionsSchema).optional().nullable(),
 });
 
 const CategoryToCreateSchema = z.object({
   title: z
     .string()
     .min(3, 'title must be at least 3 letters')
-    .max(10024, 'title must be at most 1024 letters'),
+    .max(1024, 'title must be at most 1024 letters'),
+  questions: z.array(questionsSchema).optional().nullable(),
 });
 
 const CategoryToUpdateSchema = z.object({
   title: z
     .string()
     .min(3, 'title must be at least 3 letters')
-    .max(10024, 'title must be at most 1024 letters'),
+    .max(1024, 'title must be at most 1024 letters'),
+  questions: z.array(questionsSchema).optional().nullable(),
 });
 
 type Category = z.infer<typeof CategorySchema>;
 type CategoryToCreate = z.infer<typeof CategoryToCreateSchema>;
 type CategoryToDelete = z.infer<typeof CategorySchema>;
 type CategoryToUpdate = z.infer<typeof CategoryToUpdateSchema>;
-const mockCategories: Array<Category> = [
+/* const mockCategories: Array<Category> = [
   {
     id: 1,
     slug: 'html',
@@ -44,7 +52,7 @@ const mockCategories: Array<Category> = [
     slug: 'java',
     title: 'JAVA',
   },
-];
+]; */
 const prisma = new PrismaClient();
 
 export async function getCategories(
@@ -82,8 +90,8 @@ export async function createCategory(
   console.log('categoryToCreate :>> ', categoryToCreate.title);
   const createdCategory = await prisma.categories.create({
     data: {
-      title: categoryToCreate.title,
-      slug: categoryToCreate.title.toLowerCase().replace(' ', '-'),
+      title: xss(categoryToCreate.title),
+      slug: xss(categoryToCreate.title).toLowerCase().replace(' ', '-'),
     },
   });
 
@@ -105,21 +113,21 @@ export async function deleteCategory(
 }
 
 export async function updateCategory(
-  categoryToUpdate: CategoryToUpdate,
-  slug: string
-): Promise<Category> {
+  newValidCategory: CategoryToCreate,
+  categoryToUpdate: Category
+): Promise<Category | null> {
   console.log('categoryToUpdate :>> ', categoryToUpdate.title);
-  console.log('slug :>> ', slug);
+  console.log('new content :>> ', newValidCategory.title);
   if (!categoryToUpdate) {
     throw new Error('Category not found');
   }
   const updatedCategory = await prisma.categories.update({
     where: {
-      slug: slug,
+      slug: categoryToUpdate.slug,
     },
     data: {
-      title: categoryToUpdate?.title,
-      slug: categoryToUpdate?.title.toLowerCase().replace(' ', '-'),
+      title: xss(newValidCategory?.title),
+      slug: xss(newValidCategory?.title).toLowerCase().replace(' ', '-'),
     },
   });
   console.log('updatedCategory :>> ', updatedCategory);
