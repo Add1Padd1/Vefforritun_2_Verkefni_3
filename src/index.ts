@@ -5,7 +5,9 @@ import {
   getCategories,
   getCategory,
   validateCategory,
+  validateUpdatedCategory,
   deleteCategory,
+  updateCategory,
 } from './categories.db.js';
 
 const app = new Hono();
@@ -53,21 +55,54 @@ app.post('/categories', async (c) => {
     );
   }
   const createdCategory = await createCategory(validCategory.data);
+  console.log('createdCategory :>> ', createdCategory);
   return c.json(createdCategory, 201);
 });
 // Það sem ég gerði til að deletea category...
-app.delete('/categories/:slug', async (c) => {
+app.delete('/category/:slug', async (c) => {
   const slug = c.req.param('slug');
   console.log(slug);
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   console.log(category);
   if (!category) {
     return c.json({ error: 'Category not found' }, 404);
   }
-  const deletedCategory = await deleteCategory(category);
-  return c.json(deletedCategory, 401);
+  try {
+    await deleteCategory(category);
+    return c.body(null, 204);
+  } catch (error) {
+    return c.json({ error: 'Internal server error' }, 500);
+  }
 });
 
+// Það sem ég gerði til að updatea category...
+app.patch('/category/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  const category = getCategory(slug);
+  if (!category) {
+    return c.json({ error: 'Category not found' }, 404);
+  }
+  let categoryToUpdate: unknown;
+  try {
+    categoryToUpdate = await c.req.json();
+  } catch (error) {
+    return c.json({ error: 'invalid json' }, 400);
+  }
+  const validCategory = validateUpdatedCategory(categoryToUpdate);
+  console.log('validCategory :>> ', validCategory);
+  if (!validCategory.success) {
+    return c.json(
+      { error: 'invalid data', errors: validCategory.error.flatten() },
+      400
+    );
+  }
+  console.log('Er kominn hérna');
+  const updated = await updateCategory(validCategory.data, slug);
+  console.log('updated :>> ', updated);
+  return c.json(updated, 200);
+
+  /* return c.json({ error: 'Internal server error' }, 500); */
+});
 serve(
   {
     fetch: app.fetch,

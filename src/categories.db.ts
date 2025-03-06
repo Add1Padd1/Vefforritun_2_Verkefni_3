@@ -17,9 +17,17 @@ const CategoryToCreateSchema = z.object({
     .max(10024, 'title must be at most 1024 letters'),
 });
 
+const CategoryToUpdateSchema = z.object({
+  title: z
+    .string()
+    .min(3, 'title must be at least 3 letters')
+    .max(10024, 'title must be at most 1024 letters'),
+});
+
 type Category = z.infer<typeof CategorySchema>;
 type CategoryToCreate = z.infer<typeof CategoryToCreateSchema>;
 type CategoryToDelete = z.infer<typeof CategorySchema>;
+type CategoryToUpdate = z.infer<typeof CategoryToUpdateSchema>;
 const mockCategories: Array<Category> = [
   {
     id: 1,
@@ -48,8 +56,12 @@ export async function getCategories(
   return categories;
 }
 
-export function getCategory(slug: string): Category | null {
-  const cat = mockCategories.find((c) => c.slug === slug);
+export async function getCategory(slug: string): Promise<Category | null> {
+  const cat = await prisma.categories.findUnique({
+    where: {
+      slug: slug,
+    },
+  });
   return cat ?? null;
 }
 
@@ -58,10 +70,16 @@ export function validateCategory(categoryToValidate: unknown) {
 
   return result;
 }
+export function validateUpdatedCategory(categoryToValidate: unknown) {
+  const result = CategoryToUpdateSchema.safeParse(categoryToValidate);
+
+  return result;
+}
 
 export async function createCategory(
   categoryToCreate: CategoryToCreate
 ): Promise<Category> {
+  console.log('categoryToCreate :>> ', categoryToCreate.title);
   const createdCategory = await prisma.categories.create({
     data: {
       title: categoryToCreate.title,
@@ -84,4 +102,26 @@ export async function deleteCategory(
     },
   });
   return deletedCategory;
+}
+
+export async function updateCategory(
+  categoryToUpdate: CategoryToUpdate,
+  slug: string
+): Promise<Category> {
+  console.log('categoryToUpdate :>> ', categoryToUpdate.title);
+  console.log('slug :>> ', slug);
+  if (!categoryToUpdate) {
+    throw new Error('Category not found');
+  }
+  const updatedCategory = await prisma.categories.update({
+    where: {
+      slug: slug,
+    },
+    data: {
+      title: categoryToUpdate?.title,
+      slug: categoryToUpdate?.title.toLowerCase().replace(' ', '-'),
+    },
+  });
+  console.log('updatedCategory :>> ', updatedCategory);
+  return updatedCategory;
 }
